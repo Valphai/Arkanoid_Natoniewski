@@ -509,7 +509,7 @@ TextureImporter:
         x: 81
         y: 177
         width: 30
-        height: 43
+        height: 30
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2056,6 +2056,27 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: GUI_93
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 211
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e13621665003f84080a7d16115bb449
+      internalID: -1204121244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -2084,6 +2105,7 @@ TextureImporter:
       GUI_78: 708077648
       GUI_22: 1096842799
       GUI_6: -887651726
+      GUI_93: -1204121244
       GUI_16: -1938418358
       GUI_8: -1390536268
       GUI_52: -1367034750

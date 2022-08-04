@@ -23,10 +23,12 @@ namespace GameSave
         }
         public void Load(IPersistantObject game)
         {
+            if (!File.Exists(savePath)) return;
             using (
                 var reader = new BinaryReader(File.Open(savePath, FileMode.Open))
             ) 
             {
+
                 game.Load(new GameDataReader(reader, reader.ReadInt32()));
             }
         }

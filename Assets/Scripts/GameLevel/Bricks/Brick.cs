@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GameLevel.Bricks
 {
-    public abstract class Brick : IPersistantObject
+    public abstract class Brick : MonoBehaviour
     {
         private Color color;
         private Sprite sprite;

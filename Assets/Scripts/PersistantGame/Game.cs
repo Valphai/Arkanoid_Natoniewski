@@ -1,3 +1,4 @@
+using System;
 using GameLevel;
 using GameSave;
 using GameUI;
@@ -7,27 +8,30 @@ namespace PersistantGame
 {
     public class Game : IPersistantObject
     {
-        private Generator gen { get { return Generator.Instance; } }
         private ScoreManager scoreManager { get { return ScoreManager.Instance; } }
         private GameSaver gameSaver;
         [SerializeField] private Vaus vaus;
+        [SerializeField] private Generator gen;
         private const int saveVersion = 1;
         
         private void OnEnable()
         {
             gameSaver = new GameSaver();
+            MenuButtons.OnNewGame += StartNewGame;
+            MenuButtons.OnGameSave += SaveGame;
+            MenuButtons.OnGameLoad += LoadGame;
         }
-        private void Update()
+        private void OnDisable()
         {
-            // if (Input.GetKeyDown(SaveKey)) 
-            // {
-			//     gameSaver.Save(this, saveVersion);
-            // }
-            // else if (Input.GetKeyDown(LoadKey)) 
-            // {
-            //     StartNewGame();
-            //     gameSaver.Load(this);
-            // }
+            MenuButtons.OnNewGame -= StartNewGame;
+            MenuButtons.OnGameSave -= SaveGame;
+            MenuButtons.OnGameLoad -= LoadGame;
+        }
+        private void SaveGame() => gameSaver.Save(this, saveVersion);
+        private void LoadGame()
+        {
+            StartNewGame();
+            gameSaver.Load(this);
         }
         public override void Save(GameDataWriter writer)
         {
@@ -45,6 +49,8 @@ namespace PersistantGame
         public void StartNewGame()
         {
             vaus.transform.position = Vector2.up * -4.2f;
+            gen.StartNewGame();
+            scoreManager.StartNewGame();
         }
     }
 }

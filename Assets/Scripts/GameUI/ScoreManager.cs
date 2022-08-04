@@ -25,9 +25,7 @@ namespace GameUI
         private void OnEnable()
         {
             Brick.OnBrickDestroyed += IncreaseScore;
-            currentScore = 0;
-            highScore = 0;
-            SetScoreText();
+            StartNewGame();
         }
         private void OnDisable()
         {
@@ -48,7 +46,12 @@ namespace GameUI
             highScore = reader.ReadInt();
             SetScoreText();
         }
-
+        public void StartNewGame()
+        {
+            currentScore = 0;
+            highScore = 0;
+            SetScoreText();
+        }
         private void SetScoreText()
         {
             scoreText.text = currentScore.ToString();

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a45a64c270374f49a41eb5aa27f985d, type: 3}
   m_Name: LevelData
   m_EditorClassIdentifier: 
-  BrickWidth: 0.5
-  BrickHeight: 0.25
-  LevelWidth: 13
-  LevelHeight: 15
+  YOffset: -1
+  XOffset: -3.14
+  LevelWidth: 14
+  LevelHeight: 17
