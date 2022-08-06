@@ -364,13 +364,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Symmetry: 0
-  RandomFillThreshold: 40
-  SmoothTimes: 1
-  PowerUpProbabilityLimiter: 4
+  RandomFillThreshold: 20
+  SmoothTimes: 0
+  PowerUpProbabilityLimiter: 5
   PowerUpSpawnThreshold: 0.5
   brickPrefab: {fileID: 2804537215502779906, guid: a9763027adcd71347aa8c7a3304cd7a1, type: 3}
   LevelData: {fileID: 11400000, guid: 08c214e15342c484c80b16b949cffb5c, type: 2}
-  PowerUps: []
+  PowerUps:
+  - {fileID: 2992441102105713541, guid: 73964ea109c923544ad6ddf6000329b2, type: 3}
+  - {fileID: 811055488209481847, guid: e7eb67725aa3fbc4d8fcce1eaca38ede, type: 3}
 --- !u!4 &1791488512
 Transform:
   m_ObjectHideFlags: 0
@@ -433,6 +435,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d8c48fe498f4ae4bb4e4b7c638fcd31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShootButton: 32
+  vausSprite: {fileID: -1015476235, guid: ba107b0c48bad924eb44e2908ccb8170, type: 3}
+  vausLaserSprite: {fileID: 1966396393, guid: ba107b0c48bad924eb44e2908ccb8170, type: 3}
+  laserPrefab: {fileID: 3932500352316689847, guid: 92209ab004cbe2b4285c663ddefddd51, type: 3}
+  laserSpawnOffset: {x: 0.8, y: 0.69}
   moveSpeed: 6
 --- !u!61 &1805459019
 BoxCollider2D:

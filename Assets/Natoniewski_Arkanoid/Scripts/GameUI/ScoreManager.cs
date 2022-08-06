@@ -25,7 +25,6 @@ namespace GameUI
         private void OnEnable()
         {
             Brick.OnBrickDestroyed += IncreaseScore;
-            StartNewGame();
         }
         private void OnDisable()
         {

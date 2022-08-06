@@ -14,13 +14,14 @@ namespace PersistantGame
         [Range(0,100)] 
         public int RandomFillThreshold;
         public int SmoothTimes;
-        [Tooltip("The higher this number, the less frequent powerup drops are. Assumed to be at least 1 + maxHp")]
+        [Tooltip("The higher this number, the less frequent powerup drops are. Assumed to be at least 1 + max brick Hp")]
         public int PowerUpProbabilityLimiter;
         [Range(0f,1f)]
         public float PowerUpSpawnThreshold;
         private int seed;
         private System.Random pseudoRandom;
         private int[,] slots;
+        private int[,] savedSlotsToRecreate;
         private List<Brick> activeBricks;
         private Factory<Brick> factory;
         [SerializeField] private Brick brickPrefab;
@@ -77,7 +78,7 @@ namespace PersistantGame
                 }
             }
         }
-        public void StartNewGame()
+        private void ResetChecks()
         {
             if (slots == null) 
             {
@@ -91,7 +92,10 @@ namespace PersistantGame
                 factory.Return(activeBricks[i]);
             }
             activeBricks.Clear();
-
+        }
+        public void StartNewGame()
+        {
+            ResetChecks();
             GenerateMap();
         }
         /// <param name="x">Integer index</param>
@@ -103,6 +107,10 @@ namespace PersistantGame
             slots[x, y] = hp;
             Brick b;
             Vector2 brickPos = symm ? 
+                /* 
+                    if using symmetry we need x index to be offset by LevelWidth / 2,
+                    hence here we get rid of this offset when setting position
+                */
                 new Vector2(
                     -((x - LevelData.LevelWidth / 2) * LevelData.BrickWidth + LevelData.XOffset), 
                     y * LevelData.BrickHeight + LevelData.YOffset
@@ -114,7 +122,6 @@ namespace PersistantGame
                 );
             if (hp == 0)
             {
-                
                 var brickToRemove = 
                     activeBricks.Where(b => (Vector2)b.transform.position == brickPos);
                 if (brickToRemove.Count() > 0)
@@ -140,25 +147,85 @@ namespace PersistantGame
                 b.PowerUpToSpawn = PowerUps[Random.Range(0, PowerUps.Length)];
             }
         }
+        public void RebuildGameLevel()
+        {
+            ResetChecks();
+            if (Symmetry)
+            {
+                for (int x = 0; x < LevelData.LevelWidth / 2; x++)
+                {
+                    for (int y = 0; y < LevelData.LevelHeight; y++)
+                    {
+                        int brickHp = savedSlotsToRecreate[x, y];
+                        SetSlot(x, y, brickHp);
+                    }
+                }
+                for (int x = 0; x < LevelData.LevelWidth / 2; x++)
+                {
+                    for (int y = 0; y < LevelData.LevelHeight; y++)
+                    {
+                        int brickHp = savedSlotsToRecreate[x, y];
+                        SetSlot(x + LevelData.LevelWidth / 2, y, brickHp, 
+                            Symmetry
+                        );
+                    }
+                }
+                return;
+            }
+            for (int x = 0; x < LevelData.LevelWidth; x++)
+            {
+                for (int y = 0; y < LevelData.LevelHeight; y++)
+                {
+                    int brickHp = savedSlotsToRecreate[x, y];
+                    SetSlot(x, y, brickHp);
+                }
+            }
+        }
         private void GenerateMap()
         {
             if (Symmetry)
             {
-                RandomFillMapSymmetry();
+                RandomFillMap(
+                    LevelData.LevelWidth / 2
+                );
             }
             else
             {
-                RandomFillMap();
+                RandomFillMap(
+                    LevelData.LevelWidth
+                );
     
-                for (int i = 0; i < SmoothTimes; i++) 
+            }
+            for (int i = 0; i < SmoothTimes; i++) 
+            {
+                SmoothMap();
+            }
+
+            if (Symmetry)
+                CopyRest();
+
+            savedSlotsToRecreate = slots;
+        }
+
+        private void CopyRest()
+        {
+            for (int x = 0; x < LevelData.LevelWidth / 2; x++) 
+            {
+                for (int y = 0; y < LevelData.LevelHeight; y++) 
                 {
-                    SmoothMap();
+                    SetSlot(
+                        x + LevelData.LevelWidth / 2, 
+                        y, slots[x, y], Symmetry
+                    );
                 }
             }
         }
-        private void RandomFillMap() 
+
+        private void RandomFillMap(
+            int width
+        ) 
         {
-            for (int x = 0; x < LevelData.LevelWidth; x++) 
+            for (int x = 0; x < width; x++) 
             {
                 for (int y = 0; y < LevelData.LevelHeight; y++) 
                 {
@@ -174,45 +241,27 @@ namespace PersistantGame
                 }
             }
         }
-        private void RandomFillMapSymmetry()
-        {
-            for (int x = 0; x < LevelData.LevelWidth / 2; x++) 
-            {
-                for (int y = 0; y < LevelData.LevelHeight; y++) 
-                {
-                    float dice = pseudoRandom.Next(0, 100);
-                    if (dice <= RandomFillThreshold)
-                    {
-                        SetSlot(x, y, 1);
-                        SetSlot(
-                            x + LevelData.LevelWidth / 2, 
-                            y, 1, Symmetry
-                        );
-                    }
-                    else
-                    {
-                        SetSlot(x, y, 0);
-                        SetSlot(
-                            x + LevelData.LevelWidth / 2, 
-                            y, 0, Symmetry
-                        );
-                    }
-                }
-            }
-        }
         private void SmoothMap()
         {
-            for (int x = 0; x < LevelData.LevelWidth; x++) 
+            int width = Symmetry ? LevelData.LevelWidth / 2 : LevelData.LevelWidth;
+            int height = Symmetry ? LevelData.LevelWidth / 2 : LevelData.LevelWidth;
+            for (int x = 0; x < width; x++) 
             {
-                for (int y = 0; y < LevelData.LevelHeight; y++) 
+                for (int y = 0; y < height; y++) 
                 {
                     int neighbourHpCount = GetSurroundingBrickHpCount(x, y);
 
-                    if (neighbourHpCount < 2)
+                    if (neighbourHpCount < 4)
                         SetSlot(x, y, 1);
-
-                    else if (neighbourHpCount > 2)
+                    else if (neighbourHpCount == 5)
+                        SetSlot(x, y, 3);
+                    else if (neighbourHpCount == 6)
+                        SetSlot(x, y, 4);
+                    else if (neighbourHpCount <= 8) // 7, 8
+                        SetSlot(x, y, 2);
+                    else if (neighbourHpCount >= 2)
                         SetSlot(x, y, 0);
+                    
                 }
             }
         }
@@ -237,7 +286,6 @@ namespace PersistantGame
                     }
                 }
             }
-
             return BrickHpCount;
         }
     }   

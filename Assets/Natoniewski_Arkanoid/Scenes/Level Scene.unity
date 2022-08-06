@@ -725,6 +725,7 @@ GameObject:
   - component: {fileID: 2011801247}
   - component: {fileID: 2011801249}
   - component: {fileID: 2011801248}
+  - component: {fileID: 2011801250}
   m_Layer: 0
   m_Name: Wall Top
   m_TagString: Untagged
@@ -782,7 +783,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.15367913, y: -0.048299074}
+  m_Offset: {x: 0.041385174, y: -0.048299074}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -793,5 +794,17 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 6.804685, y: 1.0965981}
+  m_Size: {x: 7.99673, y: 1.0965981}
   m_EdgeRadius: 0
+--- !u!114 &2011801250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2011801246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c01e3b4611b9beb47b3b6c4564c7c97a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

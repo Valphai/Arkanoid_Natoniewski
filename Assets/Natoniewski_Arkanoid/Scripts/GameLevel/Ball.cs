@@ -6,8 +6,9 @@ namespace GameLevel
 {
     public class Ball : IPersistantObject
     {
-        [SerializeField] private float moveSpeed;
         private Rigidbody2D rb;
+        private float splitAngle = 60f;
+        [SerializeField] private float moveSpeed;
         public static event Action<Ball> OnBallKill;
 
         private void OnEnable()
@@ -29,6 +30,24 @@ namespace GameLevel
                 moveSpeed
             );
             rb.AddForce(force);
+        }
+        public void ConstV() => rb.velocity = rb.velocity.normalized * moveSpeed;
+        public void Split(Ball newBall)
+        {
+            Vector2 initialDirection = rb.velocity;
+            
+            Quaternion newRotation = Quaternion.AngleAxis(
+                splitAngle, -Vector3.forward
+            );
+            Quaternion newRotationForNewBall = Quaternion.AngleAxis(
+                -splitAngle, -Vector3.forward
+            );
+            rb.velocity = Vector2.zero;
+            newBall.rb.velocity = Vector2.zero;
+            newBall.rb.isKinematic = false;
+
+            rb.AddForce(newRotation * initialDirection);
+            newBall.rb.AddForce(newRotationForNewBall * initialDirection);
         }
     }
 }

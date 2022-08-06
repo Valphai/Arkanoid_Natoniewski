@@ -6,10 +6,19 @@ namespace GameLevel
     {
         private void OnCollisionEnter2D(Collision2D other)
         {
-            if (other.gameObject.tag == "Ball")
+            switch (other.gameObject.tag)
             {
-                Ball b = other.gameObject.GetComponent<Ball>();
-                b.Kill();
+                case "Ball":
+                {
+                    Ball b = other.gameObject.GetComponent<Ball>();
+                    b.Kill();
+                    break;
+                }
+                case "PowerUp":
+                {
+                    Destroy(other.gameObject);
+                    break;
+                }
             }
         }
     }   

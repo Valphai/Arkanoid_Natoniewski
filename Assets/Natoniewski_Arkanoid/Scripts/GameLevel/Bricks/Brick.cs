@@ -13,11 +13,8 @@ namespace GameLevel.Bricks
         [SerializeField, HideInInspector] private int maxHp;
         [SerializeField] private int brickDestroyScore;
         public static event Action<Brick> OnBrickDestroyed;
-        
-        private void OnEnable()
-        {
-            sr = GetComponent<SpriteRenderer>();
-        }
+
+        private void OnEnable() => sr = GetComponent<SpriteRenderer>();
         public void SetUp(int hp, Color[] colors, float x, float y)
         {
             SetUp(hp, colors, new Vector2(x, y));
@@ -34,9 +31,10 @@ namespace GameLevel.Bricks
             this.maxHp = hp;
             sr.color = colors[hp - 1];
         }
-        public int GetHp() => hp;
         private void DecreaseHp()
         {
+            if (hp >= 4) return; // non destructible
+            
             hp -= 1;
             SpawnParticle();
             if (hp <= 0) Kill();
@@ -67,6 +65,14 @@ namespace GameLevel.Bricks
             if (other.gameObject.tag == "Ball")
             {
                 DecreaseHp();
+            }
+        }
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (other.gameObject.tag == "Laser")
+            {
+                DecreaseHp();
+                Destroy(other.gameObject);
             }
         }
     }
