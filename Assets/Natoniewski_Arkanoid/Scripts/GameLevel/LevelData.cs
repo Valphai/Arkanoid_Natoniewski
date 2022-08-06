@@ -12,6 +12,7 @@ namespace GameLevel
         public const float BrickHeight = 4f / PixelsPerUnit;
         public const int LevelWidth = 13;
         public const int LevelHeight = 17;
+        public const string FactoryName = "Factory";
         public Color[] BrickColors;
     }
 }

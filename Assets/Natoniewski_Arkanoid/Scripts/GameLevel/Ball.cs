@@ -1,3 +1,4 @@
+using System;
 using GameSave;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ namespace GameLevel
     {
         [SerializeField] private float moveSpeed;
         private Rigidbody2D rb;
+        public static event Action<Ball> OnBallKill;
 
         private void OnEnable()
         {
@@ -17,7 +19,7 @@ namespace GameLevel
             rb.isKinematic = false;
             rb.AddForce(new Vector2(moveSpeed, moveSpeed));
         }
-
+        public void Kill() => OnBallKill?.Invoke(this);
         public void BounceOffVaus(float dir, float dstFromCenter)
         {
             rb.velocity = Vector2.zero;

@@ -22,7 +22,8 @@ namespace PersistantGame
         private System.Random pseudoRandom;
         private int[,] slots;
         private List<Brick> activeBricks;
-        [SerializeField] private BrickFactory factory;
+        private Factory<Brick> factory;
+        [SerializeField] private Brick brickPrefab;
         [SerializeField] private LevelData LevelData;
         [SerializeField] private PowerUp[] PowerUps;
 
@@ -34,12 +35,12 @@ namespace PersistantGame
         }
         private void OnEnable()
         {
-            Brick.OnBrickDestroyed += factory.ReturnBrick;
+            Brick.OnBrickDestroyed += ReturnBrick;
+            factory = new Factory<Brick>(
+                brickPrefab, LevelData.FactoryName
+            );
         }
-        private void OnDisable()
-        {
-            Brick.OnBrickDestroyed -= factory.ReturnBrick;
-        }
+        private void OnDisable() => Brick.OnBrickDestroyed -= ReturnBrick;
         public override void Save(GameDataWriter writer)
         {
             writer.Write(seed);
@@ -47,9 +48,14 @@ namespace PersistantGame
             {
                 for (int y = 0; y < slots.GetLength(1); y++)
                 {
-                    writer.Write(slots[x, y]); // 0, 1,2,3, 4 (non destructible)
+                    writer.Write(slots[x, y]); // 0 (empty), 1,2,3, 4 (non destructible)
                 }
             }
+        }
+        private void ReturnBrick(Brick b)
+        {
+            factory.Return(b);
+            activeBricks.Remove(b);
         }
         public override void Load(GameDataReader reader)
         {
@@ -62,7 +68,7 @@ namespace PersistantGame
                     int hp = reader.ReadInt();
                     if (hp != 0) // not empty
                     {
-                        Brick instance = factory.GetBrick();
+                        Brick instance = factory.Get();
                         instance.SetUp(
                             hp, LevelData.BrickColors, 
                             x, y
@@ -82,7 +88,7 @@ namespace PersistantGame
 
             for (int i = 0; i < activeBricks.Count; i++)
             {
-                factory.ReturnBrick(activeBricks[i]);
+                factory.Return(activeBricks[i]);
             }
             activeBricks.Clear();
 
@@ -115,13 +121,13 @@ namespace PersistantGame
                 {
                     b = brickToRemove.First();
                     activeBricks.Remove(b);
-                    factory.ReturnBrick(b);
+                    factory.Return(b);
                     b.PowerUpToSpawn = null;
                 }
                 return;
             }
 
-            b = factory.GetBrick();
+            b = factory.Get();
             activeBricks.Add(b);
             b.SetUp(
                 hp, LevelData.BrickColors, 

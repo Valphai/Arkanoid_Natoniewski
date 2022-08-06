@@ -66,7 +66,6 @@ namespace GameLevel.Bricks
         {
             if (other.gameObject.tag == "Ball")
             {
-                // Ball b = other.gameObject.GetComponent<Ball>();
                 DecreaseHp();
             }
         }

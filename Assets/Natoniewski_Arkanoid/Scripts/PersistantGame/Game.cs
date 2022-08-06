@@ -9,6 +9,7 @@ namespace PersistantGame
     {
         public IState CurrentState;
         private ScoreManager scoreManager { get { return ScoreManager.Instance; } }
+        private ScoreBoard scoreBoard { get { return ScoreBoard.Instance; } }
         private GameSaver gameSaver;
         private MenuState menuState = new MenuState();
         private StartState startState = new StartState();
@@ -17,14 +18,12 @@ namespace PersistantGame
         [SerializeField] private BallManager ballManager;
         [SerializeField] private Vaus vaus;
         private const int saveVersion = 1;
-        private void Awake()
-        {
-            EnterMenuState();
-        }
+        private void Awake() => EnterMenuState();
         private void OnEnable()
         {
             gameSaver = new GameSaver();
             BallManager.PlayStart += ExitState;
+            BallManager.EndGame += LostTheGame;
             MenuButtons.OnNewGame += StartNewGame;
             MenuButtons.OnGameSave += SaveGame;
             MenuButtons.OnGameLoad += LoadGame;
@@ -33,6 +32,7 @@ namespace PersistantGame
         {
             
             BallManager.PlayStart -= ExitState;
+            BallManager.EndGame -= LostTheGame;
             MenuButtons.OnNewGame -= StartNewGame;
             MenuButtons.OnGameSave -= SaveGame;
             MenuButtons.OnGameLoad -= LoadGame;
@@ -58,11 +58,13 @@ namespace PersistantGame
             ballManager.OnPlayUpdate();
             vaus.OnPlayUpdate();
         }
-        private void SaveGame() => gameSaver.Save(this, saveVersion);
-        private void LoadGame()
+        public void StartNewGame()
         {
-            StartNewGame();
-            gameSaver.Load(this);
+            vaus.transform.position = Vector2.up * -4.2f;
+            gen.StartNewGame();
+            scoreManager.StartNewGame();
+            ballManager.StartNewGame();
+            EnterStartState();
         }
         public override void Save(GameDataWriter writer)
         {
@@ -77,13 +79,16 @@ namespace PersistantGame
             gen.Load(reader);
             scoreManager.Load(reader);
         }
-        public void StartNewGame()
+        private void SaveGame() => gameSaver.Save(this, saveVersion);
+        private void LoadGame()
         {
-            vaus.transform.position = Vector2.up * -4.2f;
-            gen.StartNewGame();
-            scoreManager.StartNewGame();
-            ballManager.StartNewGame();
-            EnterStartState();
+            StartNewGame();
+            gameSaver.Load(this);
+        }
+        private void LostTheGame()
+        {
+            ExitState();
+            scoreBoard.Activate();
         }
     }
 }

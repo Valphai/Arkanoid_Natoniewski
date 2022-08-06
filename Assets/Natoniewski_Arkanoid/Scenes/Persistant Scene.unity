@@ -368,7 +368,7 @@ MonoBehaviour:
   SmoothTimes: 1
   PowerUpProbabilityLimiter: 4
   PowerUpSpawnThreshold: 0.5
-  factory: {fileID: 11400000, guid: d7d0ffb20263e4740b871d7d7ee54d69, type: 2}
+  brickPrefab: {fileID: 2804537215502779906, guid: a9763027adcd71347aa8c7a3304cd7a1, type: 3}
   LevelData: {fileID: 11400000, guid: 08c214e15342c484c80b16b949cffb5c, type: 2}
   PowerUps: []
 --- !u!4 &1791488512
