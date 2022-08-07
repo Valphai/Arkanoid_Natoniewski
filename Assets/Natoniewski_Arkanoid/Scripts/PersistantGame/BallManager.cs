@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using GameLevel;
 using GameLevel.PowerUps;
+using GameSave;
 using UnityEngine;
 
 namespace PersistantGame
 {
-    public class BallManager : MonoBehaviour
+    public class BallManager : IPersistantObject
     {
         private List<Ball> activeBalls;
         private Ball startingBall;
@@ -31,6 +32,37 @@ namespace PersistantGame
             Ball.OnBallKill -= KillBall;
             BallMultiplier.OnBallsMultiply -= MultiplyBalls;
         }
+        private void FixedUpdate()
+        {
+            if (keepBallsAtConstVelocity)
+            {
+                for (int i = 0; i < activeBalls.Count; i++)
+                {
+                    activeBalls[i].ConstV();
+                }
+            }
+        }
+        public override void Save(GameDataWriter writer)
+        {
+            int count = activeBalls.Count;
+            writer.Write(count);
+            for (int i = 0; i < count; i++)
+            {
+                activeBalls[i].Save(writer);
+            }
+        }
+        public override void Load(GameDataReader reader)
+        {
+            ResetChecks();
+            int count = reader.ReadInt();
+            for (int i = 0; i < count; i++)
+            {
+                Ball instance = GetBall();
+                instance.Load(reader);
+                activeBalls.Add(instance);
+            }
+            keepBallsAtConstVelocity = true;
+        }
         public void OnStartUpdate()
         {
             startingBall.transform.position =
@@ -44,17 +76,37 @@ namespace PersistantGame
             }
         }
         public void OnPlayUpdate() {}
-        private void FixedUpdate()
+        public void OnPauseEnter() 
         {
-            if (keepBallsAtConstVelocity)
+            if (activeBalls == null) return;
+            
+            keepBallsAtConstVelocity = false;
+            for (int i = 0; i < activeBalls.Count; i++)
             {
-                for (int i = 0; i < activeBalls.Count; i++)
-                {
-                    activeBalls[i].ConstV();
-                }
+                activeBalls[i].StopMovement();
+            }
+        }
+        public void OnPauseExit() 
+        {
+            if (activeBalls == null) return;
+            
+            keepBallsAtConstVelocity = true;
+            for (int i = 0; i < activeBalls.Count; i++)
+            {
+                activeBalls[i].ResumeMovement();
             }
         }
         public void StartNewGame()
+        {
+            ResetChecks();
+
+            startingBall = GetBall();
+            startingBall.transform.position = 
+                (Vector2)vaus.transform.position + initOffsetFromVaus;
+
+            activeBalls.Add(startingBall);
+        }
+        private void ResetChecks()
         {
             keepBallsAtConstVelocity = false;
             if (activeBalls == null) activeBalls = new List<Ball>();
@@ -64,18 +116,8 @@ namespace PersistantGame
                 ballsFactory.Return(activeBalls[i]);
             }
             activeBalls.Clear();
-
-            startingBall = 
-                GetBallAt((Vector2)vaus.transform.position + initOffsetFromVaus);
-            
-            activeBalls.Add(startingBall);
         }
-        private Ball GetBallAt(Vector2 pos)
-        {
-            Ball b = ballsFactory.Get();
-            b.transform.position = pos;
-            return b;
-        }
+        private Ball GetBall() => ballsFactory.Get();
         private void KillBall(Ball ball)
         {
             activeBalls.Remove(ball);
@@ -93,7 +135,9 @@ namespace PersistantGame
             Ball[] extraBalls = new Ball[count];
             for (int i = 0; i < count; i++)
             {
-                Ball newBall = GetBallAt(activeBalls[i].transform.position);
+                Ball newBall = GetBall();
+                newBall.transform.position = activeBalls[i].transform.position;
+
                 extraBalls[i] = newBall;
                 activeBalls[i].Split(newBall);
             }

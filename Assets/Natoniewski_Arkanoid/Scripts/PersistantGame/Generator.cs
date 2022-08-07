@@ -10,15 +10,17 @@ namespace PersistantGame
 {
     public class Generator : IPersistantObject
     {
-        public bool Symmetry;
-        [Range(0,100)] 
+        [Range(10, 100)] 
         public int RandomFillThreshold;
-        public int SmoothTimes;
+        public int RandomizedMaxThresholdOffset = 30;
         [Tooltip("The higher this number, the less frequent powerup drops are. Assumed to be at least 1 + max brick Hp")]
         public int PowerUpProbabilityLimiter;
-        [Range(0f,1f)]
+        [Range(0f, 1f)]
         public float PowerUpSpawnThreshold;
-        private int seed;
+        private bool symmetry;
+        private int smoothTimes;
+        private int seed = 123456789;
+        private int randomRollCount;
         private System.Random pseudoRandom;
         private int[,] slots;
         private int[,] savedSlotsToRecreate;
@@ -29,11 +31,7 @@ namespace PersistantGame
         [SerializeField] private PowerUp[] PowerUps;
 
 
-        private void Awake()
-        {
-            seed = Random.Range(0, 100000);
-            pseudoRandom = new System.Random(seed);
-        }
+        private void Awake() => ResetSeed();
         private void OnEnable()
         {
             Brick.OnBrickDestroyed += ReturnBrick;
@@ -44,7 +42,17 @@ namespace PersistantGame
         private void OnDisable() => Brick.OnBrickDestroyed -= ReturnBrick;
         public override void Save(GameDataWriter writer)
         {
-            writer.Write(seed);
+            writer.Write(symmetry ? 1 : 0);
+            // state of random seed load
+            writer.Write(randomRollCount);
+            
+            for (int x = 0; x < slots.GetLength(0); x++)
+            {
+                for (int y = 0; y < slots.GetLength(1); y++)
+                {
+                    writer.Write(savedSlotsToRecreate[x, y]);
+                }
+            }
             for (int x = 0; x < slots.GetLength(0); x++)
             {
                 for (int y = 0; y < slots.GetLength(1); y++)
@@ -53,29 +61,75 @@ namespace PersistantGame
                 }
             }
         }
-        private void ReturnBrick(Brick b)
-        {
-            factory.Return(b);
-            activeBricks.Remove(b);
-        }
         public override void Load(GameDataReader reader)
         {
-            seed = reader.ReadInt();
-            pseudoRandom = new System.Random(seed);
+            ResetChecks();
+            // load the state of random seed
+            randomRollCount = reader.ReadInt();
+            for (int i = 0; i < randomRollCount; i++)
+            {
+                pseudoRandom.Next();
+            }
+            symmetry = reader.ReadInt() == 1;
+            
+            for (int x = 0; x < slots.GetLength(0); x++)
+            {
+                for (int y = 0; y < slots.GetLength(1); y++)
+                {
+                    savedSlotsToRecreate[x, y] = reader.ReadInt();
+                }
+            }
             for (int x = 0; x < slots.GetLength(0); x++)
             {
                 for (int y = 0; y < slots.GetLength(1); y++)
                 {
                     int hp = reader.ReadInt();
-                    if (hp != 0) // not empty
-                    {
-                        Brick instance = factory.Get();
-                        instance.SetUp(
-                            hp, LevelData.BrickColors, 
-                            x, y
-                        );
-                    }
+                    SetSlot(x, y, hp, symmetry);
                 }
+            }
+        }
+        public int RandomNext(int low, int high)
+        {
+            randomRollCount++;
+            return pseudoRandom.Next(low, high);
+        }
+        public void ResetSeed()
+        {
+            randomRollCount = 0;
+            pseudoRandom = new System.Random(seed);
+        }
+        private Brick GetBrick(
+            Vector2 pos, int hp, int xIndex, int yIndex
+        )
+        {
+            Brick instance = factory.Get();
+            activeBricks.Add(instance);
+            instance.SetUp(
+                hp, LevelData.BrickColors,
+                pos, xIndex, yIndex
+            );
+            return instance;
+        }
+
+        private void ReturnBrick(Brick b)
+        {
+            slots[b.XIndex, b.YIndex] = 0;
+            b.PowerUpToSpawn = null;
+            activeBricks.Remove(b);
+            factory.Return(b);
+            if (activeBricks.Count == 0)
+            {
+                NewLevel();
+            }
+        }
+        private void ReturnBrickAt(int xIndex, int yIndex)
+        {
+            var brickToRemove = 
+                activeBricks.Where(b => b.XIndex == xIndex && b.YIndex == yIndex);
+            if (brickToRemove.Count() > 0)
+            {
+                Brick b = brickToRemove.First();
+                ReturnBrick(b);
             }
         }
         private void ResetChecks()
@@ -86,7 +140,11 @@ namespace PersistantGame
                     new int[LevelData.LevelWidth, LevelData.LevelHeight];
             }
             if (activeBricks == null) activeBricks = new List<Brick>();
-
+            if (savedSlotsToRecreate == null) 
+            {
+                savedSlotsToRecreate = 
+                    new int[slots.GetLength(0), slots.GetLength(1)];
+            }
             for (int i = 0; i < activeBricks.Count; i++)
             {
                 factory.Return(activeBricks[i]);
@@ -95,18 +153,29 @@ namespace PersistantGame
         }
         public void StartNewGame()
         {
+            NewLevel();
+        }
+        public void NewLevel()
+        {
             ResetChecks();
             GenerateMap();
         }
         /// <param name="x">Integer index</param>
         /// <param name="y">Integer index</param>
         /// <param name="hp">Brick hp</param>
-        /// <param name="symm">Use symmetry?</param>
+        /// <param name="symm">Use symmetry about y axis?</param>
         private void SetSlot(int x, int y, int hp, bool symm = false)
         {
+            if (slots[x, y] != 0) ReturnBrickAt(x, y);
+
+            if (hp == 0)
+            {
+                ReturnBrickAt(x, y);
+                return;
+            }
+
             slots[x, y] = hp;
-            Brick b;
-            Vector2 brickPos = symm ? 
+            Vector2 brickPos = symm && x > LevelData.LevelWidth / 2 ?
                 /* 
                     if using symmetry we need x index to be offset by LevelWidth / 2,
                     hence here we get rid of this offset when setting position
@@ -120,70 +189,35 @@ namespace PersistantGame
                     x * LevelData.BrickWidth + LevelData.XOffset, 
                     y * LevelData.BrickHeight + LevelData.YOffset
                 );
-            if (hp == 0)
+
+            Brick b = GetBrick(brickPos, hp, x, y);
+
+            if (hp < 4)
             {
-                var brickToRemove = 
-                    activeBricks.Where(b => (Vector2)b.transform.position == brickPos);
-                if (brickToRemove.Count() > 0)
+                float powerUpDropProbability = 1 / (float)(PowerUpProbabilityLimiter - hp);
+                if (powerUpDropProbability >= PowerUpSpawnThreshold)
                 {
-                    b = brickToRemove.First();
-                    activeBricks.Remove(b);
-                    factory.Return(b);
-                    b.PowerUpToSpawn = null;
+                    b.PowerUpToSpawn = PowerUps[Random.Range(0, PowerUps.Length)];
                 }
-                return;
-            }
-
-            b = factory.Get();
-            activeBricks.Add(b);
-            b.SetUp(
-                hp, LevelData.BrickColors, 
-                brickPos
-            );
-
-            float powerUpDropProbability = 1 / (PowerUpProbabilityLimiter - hp);
-            if (powerUpDropProbability >= PowerUpSpawnThreshold)
-            {
-                b.PowerUpToSpawn = PowerUps[Random.Range(0, PowerUps.Length)];
             }
         }
         public void RebuildGameLevel()
         {
             ResetChecks();
-            if (Symmetry)
-            {
-                for (int x = 0; x < LevelData.LevelWidth / 2; x++)
-                {
-                    for (int y = 0; y < LevelData.LevelHeight; y++)
-                    {
-                        int brickHp = savedSlotsToRecreate[x, y];
-                        SetSlot(x, y, brickHp);
-                    }
-                }
-                for (int x = 0; x < LevelData.LevelWidth / 2; x++)
-                {
-                    for (int y = 0; y < LevelData.LevelHeight; y++)
-                    {
-                        int brickHp = savedSlotsToRecreate[x, y];
-                        SetSlot(x + LevelData.LevelWidth / 2, y, brickHp, 
-                            Symmetry
-                        );
-                    }
-                }
-                return;
-            }
             for (int x = 0; x < LevelData.LevelWidth; x++)
             {
                 for (int y = 0; y < LevelData.LevelHeight; y++)
                 {
                     int brickHp = savedSlotsToRecreate[x, y];
-                    SetSlot(x, y, brickHp);
+                    SetSlot(x, y, brickHp, symmetry);
                 }
             }
         }
         private void GenerateMap()
         {
-            if (Symmetry)
+            symmetry = RandomNext(0, 1) == 1;
+            smoothTimes = RandomNext(0, 5);
+            if (symmetry)
             {
                 RandomFillMap(
                     LevelData.LevelWidth / 2
@@ -196,41 +230,50 @@ namespace PersistantGame
                 );
     
             }
-            for (int i = 0; i < SmoothTimes; i++) 
+            for (int i = 0; i < smoothTimes; i++) 
             {
                 SmoothMap();
             }
 
-            if (Symmetry)
+            if (symmetry)
                 CopyRest();
 
-            savedSlotsToRecreate = slots;
+            for (int x = 0; x < slots.GetLength(0); x++)
+            {
+                for (int y = 0; y < slots.GetLength(1); y++)
+                {
+                    savedSlotsToRecreate[x, y] = slots[x, y];
+                }
+            }
         }
-
         private void CopyRest()
         {
-            for (int x = 0; x < LevelData.LevelWidth / 2; x++) 
+            for (int x = LevelData.LevelWidth / 2; x < LevelData.LevelWidth; x++) 
             {
                 for (int y = 0; y < LevelData.LevelHeight; y++) 
                 {
+                    int hp = slots[x - LevelData.LevelWidth / 2, y];
                     SetSlot(
-                        x + LevelData.LevelWidth / 2, 
-                        y, slots[x, y], Symmetry
+                        x, y,
+                        hp, symmetry
                     );
                 }
             }
         }
-
-        private void RandomFillMap(
-            int width
-        ) 
+        private void RandomFillMap(int width) 
         {
+            int thresholdModifier = RandomNext(
+                -RandomizedMaxThresholdOffset, RandomizedMaxThresholdOffset
+            );
+            int resultingThreshold = System.Math.Clamp(
+                RandomFillThreshold + thresholdModifier, 10, 100
+            );
             for (int x = 0; x < width; x++) 
             {
                 for (int y = 0; y < LevelData.LevelHeight; y++) 
                 {
-                    float dice = pseudoRandom.Next(0,100);
-                    if (dice <= RandomFillThreshold)
+                    int dice = RandomNext(0, 100);
+                    if (dice <= resultingThreshold)
                     {
                         SetSlot(x, y, 1);
                     }
@@ -243,8 +286,8 @@ namespace PersistantGame
         }
         private void SmoothMap()
         {
-            int width = Symmetry ? LevelData.LevelWidth / 2 : LevelData.LevelWidth;
-            int height = Symmetry ? LevelData.LevelWidth / 2 : LevelData.LevelWidth;
+            int width = symmetry ? LevelData.LevelWidth / 2 : LevelData.LevelWidth;
+            int height = symmetry ? LevelData.LevelWidth / 2 : LevelData.LevelWidth;
             for (int x = 0; x < width; x++) 
             {
                 for (int y = 0; y < height; y++) 

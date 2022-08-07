@@ -9,7 +9,6 @@ namespace PersistantGame.States
 
         public void OnExit(Game game)
         {
-            game.EnterMenuState();
         }
 
         public void OnUpdate(Game game)

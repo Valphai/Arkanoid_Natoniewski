@@ -25,5 +25,15 @@ namespace GameSave
             writer.Write(value.y);
             writer.Write(value.z);
         }
+        public void Write(Vector2 value)
+        {
+            writer.Write(value.x);
+            writer.Write(value.y);
+        }
+
+        public void Write(string value)
+        {
+            writer.Write(value);
+        }
     }
 }

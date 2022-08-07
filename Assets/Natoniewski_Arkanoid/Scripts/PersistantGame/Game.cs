@@ -11,8 +11,9 @@ namespace PersistantGame
         private ScoreManager scoreManager { get { return ScoreManager.Instance; } }
         private ScoreBoard scoreBoard { get { return ScoreBoard.Instance; } }
         private LifeTracker lifeTracker { get { return LifeTracker.Instance; } }
+        private UIInput uIInput { get { return UIInput.Instance; } }
         private GameSaver gameSaver;
-        private MenuState menuState = new MenuState();
+        private PauseState pauseState = new PauseState();
         private StartState startState = new StartState();
         private PlayState playState = new PlayState();
         private int currentGameLife;
@@ -21,36 +22,34 @@ namespace PersistantGame
         [SerializeField] private Vaus vaus;
         private const int saveVersion = 1;
 
-        private void Awake() => EnterMenuState();
+        private void Awake() => EnterPauseState();
         private void OnEnable()
         {
             gameSaver = new GameSaver();
-            BallManager.OnPlayStart += ExitState;
+            BallManager.OnPlayStart += EnterPlayState;
             BallManager.OnLifeLost += LoseGameHealth;
-            MenuButtons.OnNewGame += StartNewGame;
-            MenuButtons.OnGameSave += SaveGame;
-            MenuButtons.OnGameLoad += LoadGame;
+            UIInput.OnNewGame += StartNewGame;
+            UIInput.OnGameSave += SaveGame;
+            UIInput.OnGameLoad += LoadGame;
+            UIInput.OnResumeGame += ExitCurrentState; // from PauseState
+            UIInput.OnPauseGame += EnterPauseState;
         }
         private void OnDisable()
         {
-            
-            BallManager.OnPlayStart -= ExitState;
+            BallManager.OnPlayStart -= EnterPlayState;
             BallManager.OnLifeLost -= LoseGameHealth;
-            MenuButtons.OnNewGame -= StartNewGame;
-            MenuButtons.OnGameSave -= SaveGame;
-            MenuButtons.OnGameLoad -= LoadGame;
+            UIInput.OnNewGame -= StartNewGame;
+            UIInput.OnGameSave -= SaveGame;
+            UIInput.OnGameLoad -= LoadGame;
+            UIInput.OnResumeGame -= ExitCurrentState; // from PauseState
+            UIInput.OnPauseGame -= EnterPauseState;
         }
-        private void Update()
-        {
-            CurrentState.OnUpdate(this);
-
-            if (Input.GetKeyDown(KeyCode.N))
-                StartNewGame();
-        }
-        public void EnterMenuState() => menuState.OnEnter(this);
+        private void Update() => CurrentState.OnUpdate(this);
+        public void EnterPauseState() => pauseState.OnEnter(this);
         public void EnterStartState() => startState.OnEnter(this);
         public void EnterPlayState() => playState.OnEnter(this);
-        public void ExitState() => CurrentState.OnExit(this);
+        public void OnPauseEnter() => ballManager.OnPauseEnter();
+        public void OnPauseExit() => ballManager.OnPauseExit();
         public void OnStartUpdate()
         {
             ballManager.OnStartUpdate();
@@ -60,6 +59,7 @@ namespace PersistantGame
         {
             ballManager.OnPlayUpdate();
             vaus.OnPlayUpdate();
+            uIInput.OnPlayUpdate();
         }
         public void StartNewGame()
         {
@@ -76,22 +76,25 @@ namespace PersistantGame
             writer.Write(currentGameLife);
             vaus.Save(writer);
             gen.Save(writer);
+            ballManager.Save(writer);
+            scoreBoard.Save(writer);
             scoreManager.Save(writer);
         }
         public override void Load(GameDataReader reader)
         {
+            EnterPlayState();
             int version = reader.SaveVersion;
             currentGameLife = reader.ReadInt();
+            lifeTracker.UpdateLife(currentGameLife);
             vaus.Load(reader);
             gen.Load(reader);
+            ballManager.Load(reader);
+            scoreBoard.Load(reader);
             scoreManager.Load(reader);
         }
+        private void ExitCurrentState() => CurrentState.OnExit(this);
         private void SaveGame() => gameSaver.Save(this, saveVersion);
-        private void LoadGame()
-        {
-            StartNewGame();
-            gameSaver.Load(this);
-        }
+        private void LoadGame() => gameSaver.Load(this);
         private void RebuildGameLevel()
         {
             gen.RebuildGameLevel();
@@ -105,8 +108,9 @@ namespace PersistantGame
             lifeTracker.UpdateLife(currentGameLife);
             if (currentGameLife <= 0)
             {
-                ExitState();
+                EnterPauseState();
                 scoreBoard.Activate();
+                gen.ResetSeed();
                 return;
             }
             RebuildGameLevel();

@@ -7,6 +7,7 @@ namespace GameLevel.Bricks
     public class Brick : MonoBehaviour
     {
         public PowerUp PowerUpToSpawn;
+        public int XIndex, YIndex;
         private SpriteRenderer sr;
         [SerializeField] private ParticleSystem hitEffect;
         [SerializeField] private int hp;
@@ -15,14 +16,14 @@ namespace GameLevel.Bricks
         public static event Action<Brick> OnBrickDestroyed;
 
         private void OnEnable() => sr = GetComponent<SpriteRenderer>();
-        public void SetUp(int hp, Color[] colors, float x, float y)
-        {
-            SetUp(hp, colors, new Vector2(x, y));
-        }
-        public void SetUp(int hp, Color[] colors, Vector2 v)
+        public void SetUp(
+            int hp, Color[] colors, Vector2 pos, int xIndex, int yIndex
+        )
         {
             SetHp(hp, colors);
-            transform.position = v;
+            transform.position = pos;
+            XIndex = xIndex;
+            YIndex = yIndex;
         }
 
         public void SetHp(int hp, Color[] colors)
@@ -55,10 +56,12 @@ namespace GameLevel.Bricks
         public int GetScore() => brickDestroyScore * maxHp;
         private void Kill()
         {
-            OnBrickDestroyed?.Invoke(this);
-
             if (PowerUpToSpawn != null)
-                Instantiate(PowerUpToSpawn);
+                Instantiate(PowerUpToSpawn, transform.position, 
+                    Quaternion.identity
+                );
+
+            OnBrickDestroyed?.Invoke(this);
         }
         private void OnCollisionEnter2D(Collision2D other)
         {
@@ -72,7 +75,8 @@ namespace GameLevel.Bricks
             if (other.gameObject.tag == "Laser")
             {
                 DecreaseHp();
-                Destroy(other.gameObject);
+                Laser l = other.gameObject.GetComponent<Laser>();
+                l.KillLaser();
             }
         }
     }

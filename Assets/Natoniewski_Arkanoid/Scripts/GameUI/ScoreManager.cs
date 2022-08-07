@@ -10,6 +10,7 @@ namespace GameUI
         public static ScoreManager Instance { get; private set; }
         [SerializeField] private int currentScore;
         [SerializeField] private int highScore;
+        [SerializeField] private ScoreBoard scoreBoard;
         [SerializeField] private TextMeshProUGUI scoreText;
         [SerializeField] private TextMeshProUGUI highScoreText;
 
@@ -50,8 +51,16 @@ namespace GameUI
         public void StartNewGame()
         {
             currentScore = 0;
-            highScore = 0;
+            highScore = scoreBoard.HighScore();
             SetScoreText();
+        }
+        public void SetHighScore(int value)
+        {
+            if (value > highScore)
+            {
+                highScore = value;
+                SetScoreText();
+            }
         }
         private void SetScoreText()
         {

@@ -29,5 +29,17 @@ namespace GameSave
     		value.z = reader.ReadSingle();
     		return value;
     	}
+        public Vector2 ReadVector2() 
+        {
+    		Vector2 value;
+    		value.x = reader.ReadSingle();
+    		value.y = reader.ReadSingle();
+    		return value;
+    	}
+
+        public string ReadString()
+        {
+			return reader.ReadString();
+        }
     }
 }

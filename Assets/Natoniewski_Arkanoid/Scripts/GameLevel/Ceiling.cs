@@ -8,7 +8,8 @@ namespace GameLevel
         {
             if (other.gameObject.tag == "Laser")
             {
-                Destroy(other.gameObject);
+                Laser l = other.gameObject.GetComponent<Laser>();
+                l.KillLaser();
             }
         }
     }
