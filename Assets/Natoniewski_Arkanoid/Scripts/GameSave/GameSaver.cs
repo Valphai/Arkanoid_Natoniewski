@@ -11,6 +11,7 @@ namespace GameSave
         {
             savePath = Path.Combine(Application.persistentDataPath, "SaveFile");
         }
+        public bool FileExists() => File.Exists(savePath);
         public void Save(IPersistantObject game, int saveVersion)
         {
             using (
@@ -23,7 +24,7 @@ namespace GameSave
         }
         public void Load(IPersistantObject game)
         {
-            if (!File.Exists(savePath)) return;
+            if (!FileExists()) return;
             using (
                 var reader = new BinaryReader(File.Open(savePath, FileMode.Open))
             ) 

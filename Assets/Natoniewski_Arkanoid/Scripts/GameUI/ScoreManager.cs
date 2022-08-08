@@ -1,4 +1,6 @@
+using GameLevel;
 using GameLevel.Bricks;
+using GameLevel.PowerUps;
 using GameSave;
 using TMPro;
 using UnityEngine;
@@ -26,15 +28,18 @@ namespace GameUI
         private void OnEnable()
         {
             Brick.OnBrickDestroyed += IncreaseScore;
+            PowerUp.OnPowerUpCollected += IncreaseScore;
         }
         private void OnDisable()
         {
             Brick.OnBrickDestroyed -= IncreaseScore;
+            PowerUp.OnPowerUpCollected -= IncreaseScore;
         }
         public int CurrentScore() => currentScore;
-        public void IncreaseScore(Brick b)
+        public void IncreaseScore(IScorableItem item)
         {
-            currentScore += b.GetScore();
+            currentScore += item.GetScore();
+            highScore = currentScore > highScore ? currentScore : highScore;
             SetScoreText();
         }
         public override void Save(GameDataWriter writer)

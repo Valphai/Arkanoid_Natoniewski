@@ -1,7 +1,10 @@
+using System;
+using System.Collections;
 using GameSave;
 using GameUI;
 using PersistantGame.States;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace PersistantGame
 {
@@ -21,11 +24,18 @@ namespace PersistantGame
         [SerializeField] private BallManager ballManager;
         [SerializeField] private Vaus vaus;
         private const int saveVersion = 1;
+        private const int additionalScenesToLoad = 2;
 
-        private void Awake() => EnterPauseState();
+        private void Awake()
+        {
+            LoadScenes();
+            EnterPauseState();
+        }
+        private void Start() => FileExists();
         private void OnEnable()
         {
             gameSaver = new GameSaver();
+
             BallManager.OnPlayStart += EnterPlayState;
             BallManager.OnLifeLost += LoseGameHealth;
             UIInput.OnNewGame += StartNewGame;
@@ -33,6 +43,8 @@ namespace PersistantGame
             UIInput.OnGameLoad += LoadGame;
             UIInput.OnResumeGame += ExitCurrentState; // from PauseState
             UIInput.OnPauseGame += EnterPauseState;
+            UIInput.OnLoadRequest += FileExists;
+            Generator.OnNextLevel += RestartStartState;
         }
         private void OnDisable()
         {
@@ -43,6 +55,8 @@ namespace PersistantGame
             UIInput.OnGameLoad -= LoadGame;
             UIInput.OnResumeGame -= ExitCurrentState; // from PauseState
             UIInput.OnPauseGame -= EnterPauseState;
+            UIInput.OnLoadRequest -= FileExists;
+            Generator.OnNextLevel -= RestartStartState;
         }
         private void Update() => CurrentState.OnUpdate(this);
         public void EnterPauseState() => pauseState.OnEnter(this);
@@ -67,9 +81,7 @@ namespace PersistantGame
             lifeTracker.UpdateLife(currentGameLife);
             gen.StartNewGame();
             scoreManager.StartNewGame();
-            ballManager.StartNewGame();
-            vaus.StartNewGame();
-            EnterStartState();
+            RestartStartState();
         }
         public override void Save(GameDataWriter writer)
         {
@@ -95,9 +107,14 @@ namespace PersistantGame
         private void ExitCurrentState() => CurrentState.OnExit(this);
         private void SaveGame() => gameSaver.Save(this, saveVersion);
         private void LoadGame() => gameSaver.Load(this);
+        private void FileExists() => uIInput.FileExists = gameSaver.FileExists();
         private void RebuildGameLevel()
         {
             gen.RebuildGameLevel();
+            RestartStartState();
+        }
+        private void RestartStartState()
+        {
             ballManager.StartNewGame();
             vaus.StartNewGame();
             EnterStartState();
@@ -114,6 +131,26 @@ namespace PersistantGame
                 return;
             }
             RebuildGameLevel();
+        }
+        private void LoadScenes()
+        {
+            for (int i = 0; i < additionalScenesToLoad; i++)
+            {
+                int buildIndex = i + 1;
+                Scene loadedScene = SceneManager.GetSceneByBuildIndex(buildIndex);
+                if (loadedScene.isLoaded) continue;
+
+                SceneManager.LoadSceneAsync(
+                    buildIndex, LoadSceneMode.Additive
+                );
+                // StartCoroutine(LoadSceneAt(buildIndex));
+            }
+        }
+        private IEnumerator LoadSceneAt(int buildIndex)
+        {
+            yield return SceneManager.LoadSceneAsync(
+                buildIndex, LoadSceneMode.Additive
+            );
         }
     }
 }

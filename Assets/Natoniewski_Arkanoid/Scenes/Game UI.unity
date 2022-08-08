@@ -367,6 +367,34 @@ PrefabInstance:
       propertyPath: m_Name
       value: Quit Button
       objectReference: {fileID: 0}
+    - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1494479121}
+    - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: QuitGame
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: GameUI.UIInput, GameUI
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 6053447826537633599, guid: 53fdd19e17a7418418476a981337576a, type: 3}
       propertyPath: m_text
       value: Quit
@@ -2835,7 +2863,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6053447826045378283, guid: 53fdd19e17a7418418476a981337576a, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode

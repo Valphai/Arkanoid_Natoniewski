@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GameLevel.Bricks
 {
-    public class Brick : MonoBehaviour
+    public class Brick : MonoBehaviour, IScorableItem
     {
         public PowerUp PowerUpToSpawn;
         public int XIndex, YIndex;
@@ -12,10 +12,12 @@ namespace GameLevel.Bricks
         [SerializeField] private ParticleSystem hitEffect;
         [SerializeField] private int hp;
         [SerializeField, HideInInspector] private int maxHp;
-        [SerializeField] private int brickDestroyScore;
+        public int scoreToGet { get; set; } = 15;
         public static event Action<Brick> OnBrickDestroyed;
 
-        private void OnEnable() => sr = GetComponent<SpriteRenderer>();
+        private void OnEnable() => sr = GetComponentInChildren<SpriteRenderer>();
+        public int GetScore() => scoreToGet * maxHp;
+        public bool IsDestroyable() => hp < 4;
         public void SetUp(
             int hp, Color[] colors, Vector2 pos, int xIndex, int yIndex
         )
@@ -38,7 +40,7 @@ namespace GameLevel.Bricks
             
             hp -= 1;
             SpawnParticle();
-            if (hp <= 0) Kill();
+            if (hp == 0) Kill();
         }
 
         private void SpawnParticle()
@@ -53,7 +55,6 @@ namespace GameLevel.Bricks
             mainModule.startColor = sr.color;
             Destroy(p.gameObject, mainModule.startLifetime.constant);
         }
-        public int GetScore() => brickDestroyScore * maxHp;
         private void Kill()
         {
             if (PowerUpToSpawn != null)

@@ -17,6 +17,8 @@ namespace PersistantGame
         public int PowerUpProbabilityLimiter;
         [Range(0f, 1f)]
         public float PowerUpSpawnThreshold;
+        [Range(0f, 100)]
+        public float PowerUpSpawnChanceThreshold;
         private bool symmetry;
         private int smoothTimes;
         private int seed = 123456789;
@@ -29,17 +31,18 @@ namespace PersistantGame
         [SerializeField] private Brick brickPrefab;
         [SerializeField] private LevelData LevelData;
         [SerializeField] private PowerUp[] PowerUps;
+        public static event System.Action OnNextLevel;
 
 
         private void Awake() => ResetSeed();
         private void OnEnable()
         {
-            Brick.OnBrickDestroyed += ReturnBrick;
+            Brick.OnBrickDestroyed += KillBrick;
             factory = new Factory<Brick>(
                 brickPrefab, LevelData.FactoryName
             );
         }
-        private void OnDisable() => Brick.OnBrickDestroyed -= ReturnBrick;
+        private void OnDisable() => Brick.OnBrickDestroyed -= KillBrick;
         public override void Save(GameDataWriter writer)
         {
             writer.Write(symmetry ? 1 : 0);
@@ -88,10 +91,13 @@ namespace PersistantGame
                 }
             }
         }
+        /// <param name="low">Inclusive</param>
+        /// <param name="high">Inclusive</param>
+        /// <returns>Random number in range [low, high]</returns>
         public int RandomNext(int low, int high)
         {
             randomRollCount++;
-            return pseudoRandom.Next(low, high);
+            return pseudoRandom.Next(low, high + 1);
         }
         public void ResetSeed()
         {
@@ -110,17 +116,22 @@ namespace PersistantGame
             );
             return instance;
         }
+        private void KillBrick(Brick b)
+        {
+            ReturnBrick(b);
 
+            bool allNonDestroyable = activeBricks.All(b => !b.IsDestroyable());
+            if (activeBricks.Count == 0 || allNonDestroyable)
+            {
+                NewLevel();
+            }
+        }
         private void ReturnBrick(Brick b)
         {
             slots[b.XIndex, b.YIndex] = 0;
             b.PowerUpToSpawn = null;
             activeBricks.Remove(b);
             factory.Return(b);
-            if (activeBricks.Count == 0)
-            {
-                NewLevel();
-            }
         }
         private void ReturnBrickAt(int xIndex, int yIndex)
         {
@@ -145,18 +156,21 @@ namespace PersistantGame
                 savedSlotsToRecreate = 
                     new int[slots.GetLength(0), slots.GetLength(1)];
             }
-            for (int i = 0; i < activeBricks.Count; i++)
+
+            int count = activeBricks.Count;
+            for (int i = count - 1; i == 0; i++)
             {
-                factory.Return(activeBricks[i]);
+                ReturnBrick(activeBricks[i]);
             }
-            activeBricks.Clear();
         }
         public void StartNewGame()
         {
+            ResetSeed();
             NewLevel();
         }
         public void NewLevel()
         {
+            OnNextLevel?.Invoke();
             ResetChecks();
             GenerateMap();
         }
@@ -197,7 +211,11 @@ namespace PersistantGame
                 float powerUpDropProbability = 1 / (float)(PowerUpProbabilityLimiter - hp);
                 if (powerUpDropProbability >= PowerUpSpawnThreshold)
                 {
-                    b.PowerUpToSpawn = PowerUps[Random.Range(0, PowerUps.Length)];
+                    int dice = RandomNext(0, 100);
+                    if (dice < PowerUpSpawnChanceThreshold)
+                    {
+                        b.PowerUpToSpawn = PowerUps[RandomNext(0, PowerUps.Length - 1)];
+                    }
                 }
             }
         }
@@ -248,11 +266,11 @@ namespace PersistantGame
         }
         private void CopyRest()
         {
-            for (int x = LevelData.LevelWidth / 2; x < LevelData.LevelWidth; x++) 
+            for (int x = LevelData.LevelWidth / 2 + 1; x < LevelData.LevelWidth; x++) 
             {
                 for (int y = 0; y < LevelData.LevelHeight; y++) 
                 {
-                    int hp = slots[x - LevelData.LevelWidth / 2, y];
+                    int hp = slots[x - (LevelData.LevelWidth / 2 + 1), y];
                     SetSlot(
                         x, y,
                         hp, symmetry

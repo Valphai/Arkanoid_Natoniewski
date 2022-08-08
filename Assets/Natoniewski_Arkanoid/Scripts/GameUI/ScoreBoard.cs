@@ -48,6 +48,7 @@ namespace GameUI
             {
                 ScorePlate sP = Instantiate(highScorePrefab, scorePlatesParent);
                 sP.Load(reader);
+                scorePlates.Add(sP);
             }
         }
         public int HighScore()

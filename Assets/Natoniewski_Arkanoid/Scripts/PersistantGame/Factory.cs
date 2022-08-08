@@ -55,12 +55,9 @@ namespace PersistantGame
         }
         private void CheckScene()
         {
-            if (Application.isEditor)
-            {
-                factoryScene = SceneManager.GetSceneByName(sceneName);
-                if (factoryScene.isLoaded) 
-                    return;
-            }
+            factoryScene = SceneManager.GetSceneByName(sceneName);
+            if (factoryScene.isLoaded) 
+                return;
             
             factoryScene = SceneManager.CreateScene(sceneName);
         }

@@ -9,6 +9,7 @@ namespace PersistantGame
 {
     public class BallManager : IPersistantObject
     {
+        public int MaxBallCount;
         private List<Ball> activeBalls;
         private Ball startingBall;
         private Vector2 initOffsetFromVaus = new Vector2(0f, 1f);
@@ -16,6 +17,7 @@ namespace PersistantGame
         private bool keepBallsAtConstVelocity;
         [SerializeField] private Ball ballPrefab;
         [SerializeField] private Vaus vaus;
+
         public static event Action OnPlayStart;
         public static event Action OnLifeLost;
 
@@ -132,6 +134,9 @@ namespace PersistantGame
         private void MultiplyBalls()
         {
             int count = activeBalls.Count;
+
+            if (count >= MaxBallCount) return;
+
             Ball[] extraBalls = new Ball[count];
             for (int i = 0; i < count; i++)
             {

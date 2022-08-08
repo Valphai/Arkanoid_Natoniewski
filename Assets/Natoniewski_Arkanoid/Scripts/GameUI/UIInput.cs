@@ -7,6 +7,7 @@ namespace GameUI
     public class UIInput : MonoBehaviour
     {
         public static UIInput Instance { get; private set; }
+        public bool FileExists { get; set; }
         [SerializeField] private GameObject mainMenuPanel;
         [SerializeField] private GameObject pauseMenu;
         [SerializeField] private TextMeshProUGUI popUpText;
@@ -16,6 +17,7 @@ namespace GameUI
         public static event Action OnPauseGame;
         public static event Action OnGameSave;
         public static event Action OnGameLoad;
+        public static event Action OnLoadRequest;
 
         private void Awake()
         {
@@ -40,6 +42,7 @@ namespace GameUI
         public void Home() => mainMenuPanel.SetActive(!mainMenuPanel.activeSelf);
         public void ResumeGame() => OnResumeGame?.Invoke();
         public void StartNewGame() => OnNewGame?.Invoke();
+        public void QuitGame() => Application.Quit();
         public void Save()
         {
             TweenText("Saved!");
@@ -47,10 +50,13 @@ namespace GameUI
         }
         public void Load()
         {
+            OnLoadRequest?.Invoke();
+            if (!FileExists) return;
+            
+            Home();
             TweenText("Loaded!");
             OnGameLoad?.Invoke();
         }
-
         private void TweenText(string text)
         {
             Vector2 initPosition = popUpText.gameObject.transform.position;
