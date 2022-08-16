@@ -1,11 +1,11 @@
-# ARKANOID
+# ARCANOID
 
-Projekt gry stworzony został w ok. 5 dni na potrzeby zadania rekrutacyjnego. Gra tworzona została w multi scene workflow - podzieliłem projekt na scene UI, Level oraz managery.
-Informacje o poziomie, takie jak kolor bloków, stałe poziomu itd. zawarte są w dowolnej chwili w pliku ScriptableObject [LevelData](Assets/Natoniewski_Arkanoid/Scripts/GameLevel/LevelData.cs).
+The game project was created in approx. 5 days for the recruitment task. The game was created in a multi scene workflow - I divided the project into UI, Level and managers.
+Level information, such as block color, level constants, etc., is included in the ScriptableObject [LevelData](Assets/Natoniewski_Arkanoid/Scripts/GameLevel/LevelData.cs) file at any time.
 
-Gra wykorzystuje strukturę danych [ObjectPool](https://docs.unity3d.com/ScriptReference/Pool.ObjectPool_1.html) oferowaną przez unity. Tworzone przez pool obiekty od razu przerzucane są do sceny istniejącej jedynie podczas rozgrywki o nazwie "Factory" tak jak jest to dyktowane przez [Factory.cs](Assets/Natoniewski_Arkanoid/Scripts/PersistantGame/Factory.cs).
+The game uses the [ObjectPool](https://docs.unity3d.com/ScriptReference/Pool.ObjectPool_1.html) data structure offered by unity. Objects created by the pool are immediately moved to the scene that exists only during the game, called "Factory", as dictated by [Factory.cs](Assets/Natoniewski_Arkanoid/Scripts/PersistantGame/Factory.cs).
 
-Gra stworzona została w aspekcie 4:5.
+The game was created in the 4:5 aspect.
 
 ![](Images/Gra.png)
 
@@ -13,53 +13,53 @@ Gra stworzona została w aspekcie 4:5.
 
 ## Generator
 
-Układ poziomów w każdej sesji jest identyczny w zależności od seed. Generator został napisany w sposób umożliwiający tweakowanie interesujących użytkownika elementów.
-Układ poziomów może być symetryczny bądź kompletnie losowy. Nie pisane były w tym projekcie żadne custom editory.
+The layout of the levels in each session is identical depending on the seed. The generator has been written in a way that allows tweaking the elements of interest to the user.
+The arrangement of levels can be symmetrical or completely random. There were no custom editors in this project.
 
 ![](Images/Gen.png)
 
 ## Save & Load
 
-W celu zapisu i odczytu stanu gry zastosowałem BinaryFormatter. Zdecydowałem się na właśnie ten rodzaj serializacji ze względu na kontrolę jaką oferuje.
-Stan gry jest prowadzony na każdym etapie gry. W dowolnym momencie można otworzyć menu przy użyciu klawisza ESC i kliknięcia guzika Save.
+In order to save and read the game state, I used BinaryFormatter. I chose this type of serialization because of the control it offers.
+The state of the game is saved at every stage of the game. You can open the menu at any time by pressing the ESC key and clicking the Save button.
 
-Plik zapisywany jest na ścieżce Application.persistentDataPath.
+The file is saved to Application.persistentDataPath.
 
-Na każdym etapie gry prowadzony jest high score. Po utracie całego życia gracz otrzymuje prompt o zapisaniu wyniku po wcześniejszym wprowadzeniu 3-literowej nazwy.
-Wszystkie wyniki zapisane w pliku widoczny są na końcowym ekranie.
+High score is kept at each stage of the game. After losing all life points, the player receives a prompt to save the result after having previously entered a 3-letter name.
+All results saved in the file are visible on the final screen.
 
 ![](Images/SaveLoad.gif)
 
-Wyniki wstawiane są do ScrollView.
+The results are inserted into the ScrollView.
 
 ## State machine
 
-Cała gra podzielona została na trzy stany - Pause, Start, Play
+The whole game has been divided into three states - Pause, Start, Play
 
 ### Pause
 
-Stan w którym znajduje się gracz, gdy prowadzi interakcje z UI.
+The state the player is in when interacting with the UI.
 
 ### Start
 
-Stan w którym jest gracz w momencie wejścia na kolejne poziomy. W tym stanie piłka jest w spoczynku.
-Możliwość kliknięcia ESC w celu zatrzymania gry jest w nim wyłączona.
+The state the player is in at the moment of entering the next levels. In this state, the ball is at rest.
+The ability to click ESC to stop the game is disabled there.
 
 ### Play
 
-Stan w którym jest gracz, gdy prowadzona jest rozgrywka.
+The state the player is in when the game is played.
 
 ## UI
 
-Tween UI zastosowałem jedynie dla tekstu wyświetlanego po naciśnięciu Continue/Save.
+I used LeanTween to tween the UI
 
 ## Misc
 
-Znany bug:
+Known bug:
 
-power upy poruszają się w każdym stanie. Rozwiązaniem jest napisanie managera power upów. Ten posiadałby listę powerUpów oraz factory, i podobnie jak [BallManager](Assets/Natoniewski_Arkanoid/Scripts/PersistantGame/BallManager.cs) poruszałby powerupy w metodzie OnPlayUpdate(). Toteż rozwiązuje problem leniwego instancjonowania power upów przez [Brick](Assets/Natoniewski_Arkanoid/Scripts/GameLevel/Bricks/Brick.cs). Nie robiłem tego, ponieważ zrobiłem to wielokrotnie w tym zadaniu w związku z czym uznałem, że nie musiałem już udowadniać, iż potrafię zarządzać obiektami.
+power-ups move in every state. The solution is to write a power up manager. This one would have a list of power ups and a factory, and like [BallManager](Assets/Natoniewski_Arkanoid/Scripts/PersistantGame/BallManager.cs) it would move powerups in the OnPlayUpdate() method. Thus, it solves the problem of lazy instancing of power ups by [Brick](Assets/Natoniewski_Arkanoid/Scripts/GameLevel/Bricks/Brick.cs). I did not do it because I did it many times in this assignment and therefore felt that I no longer needed to prove that I was able to do it.
 
-# UŻYTE ASSETY
+# ASSETS USED
 
 - [Arkanoid asset pack](https://kronbits.itch.io/matriax-free-assets) by Kronbits
 - [Pixel Art GUI Elements](https://mounirtohami.itch.io/pixel-art-gui-elements) by Mounir Tohami
