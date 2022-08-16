@@ -1,4 +1,4 @@
-﻿{
+{
     "files.exclude":
     {
         "**/.DS_Store":true,
@@ -16,11 +16,9 @@
         "**/*.mid":true,
         "**/*.midi":true,
         "**/*.wav":true,
-        "**/*.gif":true,
         "**/*.ico":true,
         "**/*.jpg":true,
         "**/*.jpeg":true,
-        "**/*.png":true,
         "**/*.psd":true,
         "**/*.tga":true,
         "**/*.tif":true,

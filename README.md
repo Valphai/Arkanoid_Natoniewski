@@ -1,36 +1,63 @@
 # ARKANOID
 
-## Randomizer
+Projekt gry stworzony został w ok. 5 dni na potrzeby zadania rekrutacyjnego. Gra tworzona została w multi scene workflow - podzieliłem projekt na scene UI, Level oraz managery.
+Informacje o poziomie, takie jak kolor bloków, stałe poziomu itd. zawarte są w dowolnej chwili w pliku ScriptableObject [LevelData](Assets/Natoniewski_Arkanoid/Scripts/GameLevel/LevelData.cs).
 
-Układ poziomów w każdej sesji jest identyczny w każdej sesji w zależności od seed.
+Gra wykorzystuje strukturę danych [ObjectPool](https://docs.unity3d.com/ScriptReference/Pool.ObjectPool_1.html) oferowaną przez unity. Tworzone przez pool obiekty od razu przerzucane są do sceny istniejącej jedynie podczas rozgrywki o nazwie "Factory" tak jak jest to dyktowane przez [Factory.cs](Assets/Natoniewski_Arkanoid/Scripts/PersistantGame/Factory.cs).
+
+Gra stworzona została w aspekcie 4:5.
+
+![](Images/Gra.png)
+
+![](Images/Gameplay.gif)
+
+## Generator
+
+Układ poziomów w każdej sesji jest identyczny w zależności od seed. Generator został napisany w sposób umożliwiający tweakowanie interesujących użytkownika elementów.
+Układ poziomów może być symetryczny bądź kompletnie losowy. Nie pisane były w tym projekcie żadne custom editory.
+
+![](Images/Gen.png)
 
 ## Save & Load
 
 W celu zapisu i odczytu stanu gry zastosowałem BinaryFormatter. Zdecydowałem się na właśnie ten rodzaj serializacji ze względu na kontrolę jaką oferuje.
+Stan gry jest prowadzony na każdym etapie gry. W dowolnym momencie można otworzyć menu przy użyciu klawisza ESC i kliknięcia guzika Save.
 
 Plik zapisywany jest na ścieżce Application.persistentDataPath.
 
-Uważam, że trochę przesadziłem implementując na kolejnych klasach [IPersistantObject](Assets/Natoniewski_Arkanoid/Scripts/GameSave/IPersistantObject.cs), ale zrobiłem to w celu bardzo wygodnego wywoływania na kolejnych obiektach .Save() i .Load(), przekazując jako parametr writer/reader.
+Na każdym etapie gry prowadzony jest high score. Po utracie całego życia gracz otrzymuje prompt o zapisaniu wyniku po wcześniejszym wprowadzeniu 3-literowej nazwy.
+Wszystkie wyniki zapisane w pliku widoczny są na końcowym ekranie.
 
-[Writer](Assets/Natoniewski_Arkanoid/Scripts/GameSave/GameDataWriter.cs) i [reader](Assets/Natoniewski_Arkanoid/Scripts/GameSave/GameDataReader.cs) to klasy stworzone dla wygody w celu łatwego zapisu innych "ciężkich" obiektów typu Vector2. Umożliwia mi to wywołanie po prostu writer.Write(vector2)
+![](Images/SaveLoad.gif)
 
-## Pozostałe uwagi
+Wyniki wstawiane są do ScrollView.
 
-Możliwość kliknięcia ESC w celu zatrzymania gry jest wyłączona, gdy piłka nie ruszyła z pozycji startu.
+## State machine
 
-Tween UI zastosowałem jedynie dla tekstu wyświetlanego po naciśnięciu Continue/Save. Zrobiłem to w bardzo leniwy sposób i w prawdziwym projekcie pewnie potrzebna byłaby osobna klasa oferująca tween elementów UI.
+Cała gra podzielona została na trzy stany - Pause, Start, Play
 
-Pobrane przeze mnie asset packi były ładnie zapakowane w jednym pliku. Gdybym jednak miał kilka plików graficznych, należałoby stworzyć sprite atlas.
+### Pause
 
-Uważam, że przesadziłem również z deklaracją tak wielu singletonów, jeżeli chodzi o klasy UI. Rozstrzygnąć można by to deklarując klasę, która miałaby dostęp do każdego z aktualnych singletonów, natomiast [Game.cs](Assets/Natoniewski_Arkanoid/Scripts/PersistantGame/Game.cs) po prostu by z niej korzystała.
+Stan w którym znajduje się gracz, gdy prowadzi interakcje z UI.
 
-Game -> Łącznik -> Klasy UI
+### Start
 
-Chciałem użyć URP ale z jakiegoś powodu w buildzie pojawiał się error uniemożliwiający gre. Na forum napisali że jest był to znany bug ale nie naprawiono go już 2 lata. Postanowiłem zrezygnować z URP.
+Stan w którym jest gracz w momencie wejścia na kolejne poziomy. W tym stanie piłka jest w spoczynku.
+Możliwość kliknięcia ESC w celu zatrzymania gry jest w nim wyłączona.
+
+### Play
+
+Stan w którym jest gracz, gdy prowadzona jest rozgrywka.
+
+## UI
+
+Tween UI zastosowałem jedynie dla tekstu wyświetlanego po naciśnięciu Continue/Save.
+
+## Misc
 
 Znany bug:
 
-power upy poruszają się w każdym stanie. Rozwiązaniem jest napisanie managera power upów. Ten posiadałby listę powerUpów oraz factory, i podobnie jak [BallManager](Assets/Natoniewski_Arkanoid/Scripts/PersistantGame/BallManager.cs) poruszałby powerupy w metodzie OnPlayUpdate(). Toteż rozwiązuje problem leniwego instancjonowania power upów przez [Brick](Assets/Natoniewski_Arkanoid/Scripts/GameLevel/Bricks/Brick.cs).
+power upy poruszają się w każdym stanie. Rozwiązaniem jest napisanie managera power upów. Ten posiadałby listę powerUpów oraz factory, i podobnie jak [BallManager](Assets/Natoniewski_Arkanoid/Scripts/PersistantGame/BallManager.cs) poruszałby powerupy w metodzie OnPlayUpdate(). Toteż rozwiązuje problem leniwego instancjonowania power upów przez [Brick](Assets/Natoniewski_Arkanoid/Scripts/GameLevel/Bricks/Brick.cs). Nie robiłem tego, ponieważ zrobiłem to wielokrotnie w tym zadaniu w związku z czym uznałem, że nie musiałem już udowadniać, iż potrafię zarządzać obiektami.
 
 # UŻYTE ASSETY
 
