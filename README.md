@@ -16,8 +16,6 @@ The game was created in the 4:5 aspect.
 The layout of the levels in each session is identical depending on the seed. The generator has been written in a way that allows tweaking the elements of interest to the user.
 The arrangement of levels can be symmetrical or completely random. There were no custom editors in this project.
 
-![](Images/Gen.png)
-
 ## Save & Load
 
 In order to save and read the game state, I used BinaryFormatter. I chose this type of serialization because of the control it offers.
